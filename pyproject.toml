@@ -8,10 +8,12 @@ dependencies = [
     "anthropic>=0.39.0",
     "mcp>=1.2.0",
     "python-dotenv>=1.0.0",
+    "python-telegram-bot>=21.0",
 ]
 
 [project.scripts]
 mcp-agents = "mcp_agents.cli:main"
+mcp-agents-telegram = "mcp_agents.telegram_bot:main"
 social-research-server = "mcp_agents.servers.social_research_server:run"
 
 [build-system]

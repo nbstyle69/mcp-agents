@@ -82,9 +82,28 @@ Lancer le serveur MCP seul (debug / inspection avec un client MCP) :
 uv run social-research-server
 ```
 
+## Bot Telegram
+
+Discute avec les agents directement depuis Telegram.
+
+1. Crée un bot via [@BotFather](https://t.me/BotFather) (`/newbot`) et récupère le token.
+2. Lance le bot :
+
+```bash
+TELEGRAM_BOT_TOKEN=123:AAE... ANTHROPIC_API_KEY=sk-ant-... uv run mcp-agents-telegram
+```
+
+Commandes dans Telegram :
+
+- `/agents` — choisir l'agent à qui parler (boutons)
+- (texte libre) — discuter avec l'agent actif (conversation avec mémoire courte)
+- `/run <objectif>` — lancer toute l'équipe ; renvoie le rapport en fichier `.md`
+- `/reset` — réinitialiser la conversation
+- `/start`, `/help` — aide
+
 ## Configuration
 
-Variables d'environnement (voir `.env.example`) : `ANTHROPIC_API_KEY` (requis), `ANTHROPIC_MODEL`, `ANTHROPIC_MAX_TOKENS`, `MCP_AGENTS_MAX_TOOL_ITERATIONS`.
+Variables d'environnement (voir `.env.example`) : `ANTHROPIC_API_KEY` (requis), `ANTHROPIC_MODEL`, `ANTHROPIC_MAX_TOKENS`, `MCP_AGENTS_MAX_TOOL_ITERATIONS`, `TELEGRAM_BOT_TOKEN` (pour le bot).
 
 ## Structure
 
@@ -96,6 +115,7 @@ src/mcp_agents/
 ├── agents.py          # personas (rôles)
 ├── orchestrator.py    # pipeline de collaboration
 ├── cli.py             # CLI
+├── telegram_bot.py    # bot Telegram (discuter avec les agents)
 └── servers/
     └── social_research_server.py   # serveur MCP de veille réseaux sociaux
 ```
