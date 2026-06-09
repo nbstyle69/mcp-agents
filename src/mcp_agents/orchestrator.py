@@ -63,6 +63,16 @@ class OrchestrationResult:
         return "\n".join(lines)
 
 
+def _with_brief(base: str | None, project_brief: str | None) -> str | None:
+    """Préfixe un contexte avec le brief projet (connu de tous les agents)."""
+
+    brief = (project_brief or "").strip()
+    if not brief:
+        return base
+    header = f"Contexte du projet (à toujours prendre en compte):\n{brief}"
+    return header if not base else f"{header}\n\n{base}"
+
+
 def default_servers() -> list[MCPServerConfig]:
     """Serveur MCP par défaut : la veille réseaux sociaux (lancé en sous-processus)."""
 
@@ -85,12 +95,17 @@ class Orchestrator:
         self.servers = servers if servers is not None else default_servers()
         self.agents = build_all_agents(settings)
 
-    async def run(self, objective: str, log: LogFn | None = None) -> OrchestrationResult:
+    async def run(
+        self,
+        objective: str,
+        log: LogFn | None = None,
+        project_brief: str | None = None,
+    ) -> OrchestrationResult:
         result = OrchestrationResult(objective=objective)
         async with MCPClientManager(self.servers) as manager:
             if log:
                 log(f"Outils MCP disponibles: {', '.join(manager.tool_names()) or 'aucun'}")
-            context = f"Objectif produit: {objective}"
+            context = _with_brief(f"Objectif produit: {objective}", project_brief)
             for role, instruction in PIPELINE:
                 agent = self.agents[role]
                 if log:
@@ -106,13 +121,20 @@ class Orchestrator:
         return result
 
     async def run_single(
-        self, role: str, task: str, log: LogFn | None = None
+        self,
+        role: str,
+        task: str,
+        log: LogFn | None = None,
+        project_brief: str | None = None,
     ) -> StepResult:
         """Exécute un seul agent (utile pour tester une persona isolément)."""
 
         if role not in self.agents:
             raise KeyError(f"Rôle inconnu '{role}'. Disponibles: {', '.join(self.agents)}")
         agent = self.agents[role]
+        context = _with_brief(None, project_brief)
         async with MCPClientManager(self.servers) as manager:
-            output = await agent.run(task=task, manager=manager, log=log)
+            output = await agent.run(
+                task=task, manager=manager, context=context, log=log
+            )
         return StepResult(role=role, agent_name=agent.name, output=output)

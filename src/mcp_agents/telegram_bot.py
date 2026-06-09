@@ -9,9 +9,11 @@ Lancement :
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import tempfile
+from pathlib import Path
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ChatAction
@@ -38,6 +40,33 @@ TELEGRAM_LIMIT = 4096
 DEFAULT_AGENT = "product_owner"
 # Nombre d'échanges (utilisateur+agent) conservés comme contexte de conversation.
 HISTORY_TURNS = 6
+
+# Fichier de persistance des briefs projet (par chat). Survit aux redémarrages.
+PROJECTS_FILE = Path(
+    os.environ.get(
+        "MCP_AGENTS_PROJECTS_FILE", str(Path.home() / ".mcp_agents_projects.json")
+    )
+)
+
+
+def _load_projects() -> dict[str, str]:
+    try:
+        return json.loads(PROJECTS_FILE.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def _save_projects(projects: dict[str, str]) -> None:
+    PROJECTS_FILE.write_text(
+        json.dumps(projects, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+
+def _project_brief(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> str | None:
+    """Brief du chat, sinon brief global par défaut (env), sinon None."""
+
+    projects: dict[str, str] = context.application.bot_data.setdefault("projects", {})
+    return projects.get(str(chat_id)) or os.environ.get("MCP_AGENTS_PROJECT_BRIEF")
 
 
 def _chunk(text: str, size: int = TELEGRAM_LIMIT) -> list[str]:
@@ -84,6 +113,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "Bonjour ! Je suis ton équipe produit multi-agents.\n\n"
         f"Agents disponibles :\n{agents}\n\n"
         "Commandes :\n"
+        "/project <description> — définir le contexte de ton projet (connu de tous les agents)\n"
         "/agents — choisir l'agent à qui parler\n"
         "/run <objectif> — lancer toute l'équipe sur un objectif (renvoie un rapport)\n"
         "/reset — repartir de zéro\n"
@@ -122,6 +152,27 @@ async def cmd_reset(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.effective_message.reply_text("Conversation réinitialisée.")
 
 
+async def cmd_project(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id = update.effective_chat.id
+    projects: dict[str, str] = context.application.bot_data.setdefault("projects", {})
+    brief = " ".join(context.args).strip()
+    if not brief:
+        current = _project_brief(context, chat_id)
+        if current:
+            await _send(update, f"Contexte projet actuel :\n\n{current}")
+        else:
+            await update.effective_message.reply_text(
+                "Aucun contexte projet défini. Ajoute-le avec :\n"
+                "/project <décris ton app : nom, but, cible, fonctionnalités...>"
+            )
+        return
+    projects[str(chat_id)] = brief
+    _save_projects(projects)
+    await update.effective_message.reply_text(
+        "Contexte projet enregistré ✅ Tous les agents en tiendront compte désormais."
+    )
+
+
 async def cmd_run(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     objective = " ".join(context.args).strip()
     if not objective:
@@ -130,6 +181,7 @@ async def cmd_run(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
         return
     orchestrator: Orchestrator = context.application.bot_data["orchestrator"]
+    brief = _project_brief(context, update.effective_chat.id)
     await update.effective_message.reply_text(
         f"L'équipe travaille sur : « {objective} »\n"
         "Les 6 agents collaborent (veille → PO → UX → UI → Dev → QA), "
@@ -137,7 +189,7 @@ async def cmd_run(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
     await context.bot.send_chat_action(update.effective_chat.id, ChatAction.TYPING)
     try:
-        result = await orchestrator.run(objective)
+        result = await orchestrator.run(objective, project_brief=brief)
     except Exception as exc:  # noqa: BLE001
         logger.exception("Echec du pipeline")
         await update.effective_message.reply_text(f"Erreur durant le pipeline : {exc}")
@@ -166,11 +218,11 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     role = _active_agent(context)
     orchestrator: Orchestrator = context.application.bot_data["orchestrator"]
     history = _history(context)
+    brief = _project_brief(context, update.effective_chat.id)
+    task = text if not history else f"{_context_string(history)}\n\nMessage: {text}"
     await context.bot.send_chat_action(update.effective_chat.id, ChatAction.TYPING)
     try:
-        step = await orchestrator.run_single(
-            role, text if not history else f"{_context_string(history)}\n\nMessage: {text}"
-        )
+        step = await orchestrator.run_single(role, task, project_brief=brief)
     except Exception as exc:  # noqa: BLE001
         logger.exception("Echec de l'agent")
         await update.effective_message.reply_text(f"Erreur : {exc}")
@@ -185,11 +237,13 @@ def build_application(token: str) -> Application:
     settings.require_api_key()  # échoue tôt si ANTHROPIC_API_KEY manque
     application = ApplicationBuilder().token(token).build()
     application.bot_data["orchestrator"] = Orchestrator(settings)
+    application.bot_data["projects"] = _load_projects()
 
     application.add_handler(CommandHandler("start", cmd_start))
     application.add_handler(CommandHandler("help", cmd_help))
     application.add_handler(CommandHandler("agents", cmd_agents))
     application.add_handler(CommandHandler("reset", cmd_reset))
+    application.add_handler(CommandHandler("project", cmd_project))
     application.add_handler(CommandHandler("run", cmd_run))
     application.add_handler(CallbackQueryHandler(on_agent_choice, pattern=r"^agent:"))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_message))

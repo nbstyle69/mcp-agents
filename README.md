@@ -95,6 +95,7 @@ TELEGRAM_BOT_TOKEN=123:AAE... ANTHROPIC_API_KEY=sk-ant-... uv run mcp-agents-tel
 
 Commandes dans Telegram :
 
+- `/project <description>` — définir le **contexte du projet** (nom, but, cible…), injecté dans **tous** les agents et **persistant** (survit au redémarrage)
 - `/agents` — choisir l'agent à qui parler (boutons)
 - (texte libre) — discuter avec l'agent actif (conversation avec mémoire courte)
 - `/run <objectif>` — lancer toute l'équipe ; renvoie le rapport en fichier `.md`
