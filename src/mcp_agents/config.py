@@ -26,7 +26,7 @@ class Settings:
     )
     # Nombre maximum d'allers-retours (tour LLM <-> outils) par agent.
     max_tool_iterations: int = field(
-        default_factory=lambda: int(os.environ.get("MCP_AGENTS_MAX_TOOL_ITERATIONS", "6"))
+        default_factory=lambda: int(os.environ.get("MCP_AGENTS_MAX_TOOL_ITERATIONS", "12"))
     )
 
     def require_api_key(self) -> str:
