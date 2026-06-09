@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
+
+from mcp.client.stdio import get_default_environment
 
 from .agent import LogFn
 from .agents import build_all_agents
@@ -74,15 +77,34 @@ def _with_brief(base: str | None, project_brief: str | None) -> str | None:
 
 
 def default_servers() -> list[MCPServerConfig]:
-    """Serveur MCP par défaut : la veille réseaux sociaux (lancé en sous-processus)."""
+    """Serveurs MCP par défaut.
 
-    return [
+    - ``social`` : veille réseaux sociaux (toujours actif, données simulées).
+    - ``github`` : exploration GitHub en lecture seule, **uniquement** si
+      ``GITHUB_TOKEN`` est défini (sinon les outils ne sont pas exposés).
+    """
+
+    servers = [
         MCPServerConfig(
             name="social",
             command="python",
             args=["-m", "mcp_agents.servers.social_research_server"],
         )
     ]
+    if os.environ.get("GITHUB_TOKEN"):
+        env = dict(get_default_environment())
+        env["GITHUB_TOKEN"] = os.environ["GITHUB_TOKEN"]
+        if os.environ.get("GITHUB_DEFAULT_REPO"):
+            env["GITHUB_DEFAULT_REPO"] = os.environ["GITHUB_DEFAULT_REPO"]
+        servers.append(
+            MCPServerConfig(
+                name="github",
+                command="python",
+                args=["-m", "mcp_agents.servers.github_server"],
+                env=env,
+            )
+        )
+    return servers
 
 
 class Orchestrator:

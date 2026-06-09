@@ -102,9 +102,25 @@ Commandes dans Telegram :
 - `/reset` — réinitialiser la conversation
 - `/start`, `/help` — aide
 
+## Accès GitHub (lecture seule)
+
+Les agents peuvent **explorer un dépôt GitHub en lecture seule** (lister/lire des fichiers, rechercher du code, voir issues et PR) — ils ne peuvent **rien modifier**. Activé uniquement si `GITHUB_TOKEN` est défini.
+
+1. Crée un **fine-grained token** sur https://github.com/settings/personal-access-tokens/new, limité au(x) repo(s) voulu(s), avec **Contents: Read-only** et **Metadata: Read-only** (Issues/Pull requests en Read-only si souhaité).
+2. Lance avec le token (et un repo par défaut optionnel) :
+
+```bash
+GITHUB_TOKEN=github_pat_... GITHUB_DEFAULT_REPO=owner/repo \
+ANTHROPIC_API_KEY=sk-ant-... uv run mcp-agents-telegram
+```
+
+Outils exposés (serveur MCP `github`) : `gh_repo_info`, `gh_list_files`, `gh_read_file`, `gh_search_code`, `gh_list_issues`, `gh_list_pull_requests`. Agents autorisés : Product Owner, Développeur Full Stack, QA Tester.
+
+> 🔒 Le serveur n'effectue que des requêtes **GET** — aucune écriture, aucun commit, aucun merge possible.
+
 ## Configuration
 
-Variables d'environnement (voir `.env.example`) : `ANTHROPIC_API_KEY` (requis), `ANTHROPIC_MODEL`, `ANTHROPIC_MAX_TOKENS`, `MCP_AGENTS_MAX_TOOL_ITERATIONS`, `TELEGRAM_BOT_TOKEN` (pour le bot).
+Variables d'environnement (voir `.env.example`) : `ANTHROPIC_API_KEY` (requis), `ANTHROPIC_MODEL`, `ANTHROPIC_MAX_TOKENS`, `MCP_AGENTS_MAX_TOOL_ITERATIONS`, `TELEGRAM_BOT_TOKEN` (pour le bot), `GITHUB_TOKEN` + `GITHUB_DEFAULT_REPO` (pour l'accès GitHub en lecture seule).
 
 ## Structure
 
@@ -118,7 +134,8 @@ src/mcp_agents/
 ├── cli.py             # CLI
 ├── telegram_bot.py    # bot Telegram (discuter avec les agents)
 └── servers/
-    └── social_research_server.py   # serveur MCP de veille réseaux sociaux
+    ├── social_research_server.py   # serveur MCP de veille réseaux sociaux
+    └── github_server.py            # serveur MCP GitHub (lecture seule)
 ```
 
 ## Étendre
