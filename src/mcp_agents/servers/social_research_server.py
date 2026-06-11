@@ -70,7 +70,7 @@ def search_mentions(query: str, platform: str = "all", limit: int = 5) -> str:
         text = rng.choice(templates).format(q=query)
         mentions.append(
             {
-                "id": f"{p}-{i+1}",
+                "id": f"{p}-{i + 1}",
                 "platform": p,
                 "author": f"user_{rng.randint(1000, 9999)}",
                 "text": text,
@@ -79,7 +79,9 @@ def search_mentions(query: str, platform: str = "all", limit: int = 5) -> str:
                 "sentiment": rng.choice(_SENTIMENTS),
             }
         )
-    return json.dumps({"query": query, "count": len(mentions), "mentions": mentions}, ensure_ascii=False, indent=2)
+    return json.dumps(
+        {"query": query, "count": len(mentions), "mentions": mentions}, ensure_ascii=False, indent=2
+    )
 
 
 @mcp.tool()
@@ -95,9 +97,18 @@ def trending_topics(domain: str, limit: int = 6) -> str:
     rng = _seeded_rng("trends", domain)
     limit = max(1, min(int(limit), 15))
     seeds = [
-        "IA générative", "gamification", "communauté", "abonnement", "mode hors-ligne",
-        "confidentialité des données", "accessibilité", "personnalisation", "social proof",
-        "micro-paiements", "notifications intelligentes", "onboarding rapide",
+        "IA générative",
+        "gamification",
+        "communauté",
+        "abonnement",
+        "mode hors-ligne",
+        "confidentialité des données",
+        "accessibilité",
+        "personnalisation",
+        "social proof",
+        "micro-paiements",
+        "notifications intelligentes",
+        "onboarding rapide",
     ]
     rng.shuffle(seeds)
     topics = [
@@ -152,13 +163,19 @@ def competitor_scan(product_category: str, limit: int = 4) -> str:
     # TODO: brancher une vraie source (app stores, Product Hunt, G2) au lieu du mock.
     rng = _seeded_rng("competitors", product_category)
     limit = max(1, min(int(limit), 10))
-    strengths = ["UX soignée", "grande communauté", "prix attractif", "intégrations", "contenu riche"]
+    strengths = [
+        "UX soignée",
+        "grande communauté",
+        "prix attractif",
+        "intégrations",
+        "contenu riche",
+    ]
     weaknesses = ["pas de mode hors-ligne", "support lent", "trop de pubs", "peu personnalisable"]
     competitors = []
     for i in range(limit):
         competitors.append(
             {
-                "name": f"{product_category.title().split()[0]}Rival{i+1}",
+                "name": f"{product_category.title().split()[0]}Rival{i + 1}",
                 "rating": round(rng.uniform(3.2, 4.8), 1),
                 "strengths": rng.sample(strengths, k=2),
                 "weaknesses": rng.sample(weaknesses, k=2),

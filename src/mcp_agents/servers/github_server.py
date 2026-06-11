@@ -49,9 +49,7 @@ def _get(path: str, params: dict[str, Any] | None = None) -> Any:
 
     token = _token()
     if not token:
-        raise RuntimeError(
-            "GITHUB_TOKEN absent. Fournis un token GitHub en lecture seule."
-        )
+        raise RuntimeError("GITHUB_TOKEN absent. Fournis un token GitHub en lecture seule.")
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
@@ -82,7 +80,7 @@ def gh_repo_info(repo: str = "") -> str:
         return _err("Aucun repo spécifié et GITHUB_DEFAULT_REPO non défini.")
     try:
         data = _get(f"/repos/{target}")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return _err(str(exc))
     return json.dumps(
         {
@@ -117,7 +115,7 @@ def gh_list_files(repo: str = "", path: str = "", ref: str = "") -> str:
     params = {"ref": ref} if ref else None
     try:
         data = _get(f"/repos/{target}/contents/{path.lstrip('/')}", params=params)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return _err(str(exc))
     if isinstance(data, dict):  # un fichier, pas un dossier
         return json.dumps(
@@ -129,7 +127,9 @@ def gh_list_files(repo: str = "", path: str = "", ref: str = "") -> str:
         {"name": e.get("name"), "type": e.get("type"), "size": e.get("size"), "path": e.get("path")}
         for e in data
     ]
-    return json.dumps({"repo": target, "path": path or "/", "entries": entries}, ensure_ascii=False, indent=2)
+    return json.dumps(
+        {"repo": target, "path": path or "/", "entries": entries}, ensure_ascii=False, indent=2
+    )
 
 
 @mcp.tool()
@@ -148,7 +148,7 @@ def gh_read_file(path: str, repo: str = "", ref: str = "") -> str:
     params = {"ref": ref} if ref else None
     try:
         data = _get(f"/repos/{target}/contents/{path.lstrip('/')}", params=params)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return _err(str(exc))
     if isinstance(data, list):
         return _err("Ce chemin est un dossier. Utilise gh_list_files.")
@@ -188,13 +188,12 @@ def gh_search_code(query: str, repo: str = "", limit: int = 10) -> str:
     limit = max(1, min(int(limit), 30))
     try:
         data = _get("/search/code", params={"q": f"{query} repo:{target}", "per_page": limit})
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return _err(str(exc))
-    items = [
-        {"path": it.get("path"), "url": it.get("html_url")}
-        for it in data.get("items", [])
-    ]
-    return json.dumps({"repo": target, "query": query, "matches": items}, ensure_ascii=False, indent=2)
+    items = [{"path": it.get("path"), "url": it.get("html_url")} for it in data.get("items", [])]
+    return json.dumps(
+        {"repo": target, "query": query, "matches": items}, ensure_ascii=False, indent=2
+    )
 
 
 @mcp.tool()
@@ -213,7 +212,7 @@ def gh_list_issues(repo: str = "", state: str = "open", limit: int = 10) -> str:
     limit = max(1, min(int(limit), 30))
     try:
         data = _get(f"/repos/{target}/issues", params={"state": state, "per_page": limit})
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return _err(str(exc))
     issues = [
         {
@@ -226,7 +225,9 @@ def gh_list_issues(repo: str = "", state: str = "open", limit: int = 10) -> str:
         for it in data
         if "pull_request" not in it  # l'API issues inclut les PR ; on les filtre
     ]
-    return json.dumps({"repo": target, "state": state, "issues": issues}, ensure_ascii=False, indent=2)
+    return json.dumps(
+        {"repo": target, "state": state, "issues": issues}, ensure_ascii=False, indent=2
+    )
 
 
 @mcp.tool()
@@ -245,7 +246,7 @@ def gh_list_pull_requests(repo: str = "", state: str = "open", limit: int = 10) 
     limit = max(1, min(int(limit), 30))
     try:
         data = _get(f"/repos/{target}/pulls", params={"state": state, "per_page": limit})
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         return _err(str(exc))
     prs = [
         {
@@ -257,7 +258,9 @@ def gh_list_pull_requests(repo: str = "", state: str = "open", limit: int = 10) 
         }
         for it in data
     ]
-    return json.dumps({"repo": target, "state": state, "pull_requests": prs}, ensure_ascii=False, indent=2)
+    return json.dumps(
+        {"repo": target, "state": state, "pull_requests": prs}, ensure_ascii=False, indent=2
+    )
 
 
 def run() -> None:

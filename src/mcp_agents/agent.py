@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from anthropic import AsyncAnthropic
 
@@ -59,8 +60,8 @@ class Agent:
                 model=self.settings.model,
                 max_tokens=self.settings.max_tokens,
                 system=self.system_prompt,
-                messages=messages,
-                tools=tools or [],
+                messages=messages,  # type: ignore[arg-type]
+                tools=tools or [],  # type: ignore[arg-type]
             )
 
             tool_uses = [b for b in response.content if b.type == "tool_use"]

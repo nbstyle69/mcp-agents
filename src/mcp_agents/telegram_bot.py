@@ -43,9 +43,7 @@ HISTORY_TURNS = 6
 
 # Fichier de persistance des briefs projet (par chat). Survit aux redémarrages.
 PROJECTS_FILE = Path(
-    os.environ.get(
-        "MCP_AGENTS_PROJECTS_FILE", str(Path.home() / ".mcp_agents_projects.json")
-    )
+    os.environ.get("MCP_AGENTS_PROJECTS_FILE", str(Path.home() / ".mcp_agents_projects.json"))
 )
 
 
@@ -57,9 +55,7 @@ def _load_projects() -> dict[str, str]:
 
 
 def _save_projects(projects: dict[str, str]) -> None:
-    PROJECTS_FILE.write_text(
-        json.dumps(projects, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    PROJECTS_FILE.write_text(json.dumps(projects, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _project_brief(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> str | None:
@@ -190,15 +186,13 @@ async def cmd_run(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.bot.send_chat_action(update.effective_chat.id, ChatAction.TYPING)
     try:
         result = await orchestrator.run(objective, project_brief=brief)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.exception("Echec du pipeline")
         await update.effective_message.reply_text(f"Erreur durant le pipeline : {exc}")
         return
 
     markdown = result.to_markdown()
-    with tempfile.NamedTemporaryFile(
-        "w", suffix=".md", delete=False, encoding="utf-8"
-    ) as fh:
+    with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8") as fh:
         fh.write(markdown)
         path = fh.name
     with open(path, "rb") as doc:
@@ -223,7 +217,7 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     await context.bot.send_chat_action(update.effective_chat.id, ChatAction.TYPING)
     try:
         step = await orchestrator.run_single(role, task, project_brief=brief)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.exception("Echec de l'agent")
         await update.effective_message.reply_text(f"Erreur : {exc}")
         return
