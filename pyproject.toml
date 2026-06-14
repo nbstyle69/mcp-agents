@@ -16,6 +16,7 @@ mcp-agents = "mcp_agents.cli:main"
 mcp-agents-telegram = "mcp_agents.telegram_bot:main"
 social-research-server = "mcp_agents.servers.social_research_server:run"
 github-server = "mcp_agents.servers.github_server:run"
+mcp-team-server = "mcp_agents.servers.devin_wrapper_server:run"
 
 [build-system]
 requires = ["hatchling"]

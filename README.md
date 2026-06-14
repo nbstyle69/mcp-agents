@@ -118,9 +118,28 @@ Outils exposés (serveur MCP `github`) : `gh_repo_info`, `gh_list_files`, `gh_re
 
 > 🔒 Le serveur n'effectue que des requêtes **GET** — aucune écriture, aucun commit, aucun merge possible.
 
+## Intégration Devin (serveur MCP `mcp-team`)
+
+Expose les 6 agents comme **outils MCP natifs** pour Devin (ou tout client MCP).
+
+```bash
+# Lancer le serveur seul (stdio)
+ANTHROPIC_API_KEY=sk-ant-... GITHUB_TOKEN=github_pat_... \
+GITHUB_DEFAULT_REPO=owner/repo \
+MCP_AGENTS_PROJECT_BRIEF="Mon app : ..." \
+uv run mcp-team-server
+```
+
+Outils exposés :
+- `ask_product_owner`, `ask_ux_designer`, `ask_ui_architect`, `ask_fullstack_dev`, `ask_qa_tester`, `ask_social_researcher` (question → réponse de l'agent)
+- `run_team_pipeline` (objectif → rapport complet des 6 agents)
+- `list_team` (liste les agents)
+
+Pour l'ajouter dans **Devin** : Settings → Connections → MCP servers → Add custom MCP (STDIO), command = `uv`, args = `["run", "--directory", "/path/to/mcp-agents", "mcp-team-server"]`, env = `ANTHROPIC_API_KEY`, `GITHUB_TOKEN`, `GITHUB_DEFAULT_REPO`, `MCP_AGENTS_PROJECT_BRIEF`.
+
 ## Configuration
 
-Variables d'environnement (voir `.env.example`) : `ANTHROPIC_API_KEY` (requis), `ANTHROPIC_MODEL`, `ANTHROPIC_MAX_TOKENS`, `MCP_AGENTS_MAX_TOOL_ITERATIONS`, `TELEGRAM_BOT_TOKEN` (pour le bot), `GITHUB_TOKEN` + `GITHUB_DEFAULT_REPO` (pour l'accès GitHub en lecture seule).
+Variables d'environnement (voir `.env.example`) : `ANTHROPIC_API_KEY` (requis), `ANTHROPIC_MODEL`, `ANTHROPIC_MAX_TOKENS`, `MCP_AGENTS_MAX_TOOL_ITERATIONS`, `TELEGRAM_BOT_TOKEN` (pour le bot), `GITHUB_TOKEN` + `GITHUB_DEFAULT_REPO` (pour l'accès GitHub en lecture seule), `MCP_AGENTS_PROJECT_BRIEF` (contexte projet par défaut).
 
 ## Structure
 
@@ -135,7 +154,8 @@ src/mcp_agents/
 ├── telegram_bot.py    # bot Telegram (discuter avec les agents)
 └── servers/
     ├── social_research_server.py   # serveur MCP de veille réseaux sociaux
-    └── github_server.py            # serveur MCP GitHub (lecture seule)
+    ├── github_server.py            # serveur MCP GitHub (lecture seule)
+    └── devin_wrapper_server.py     # serveur MCP exposant les agents pour Devin
 ```
 
 ## Étendre
