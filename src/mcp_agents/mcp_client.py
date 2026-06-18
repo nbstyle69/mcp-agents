@@ -70,7 +70,7 @@ class MCPClientManager:
         self._stack = AsyncExitStack()
         self._tools: dict[str, _RegisteredTool] = {}
 
-    async def __aenter__(self) -> "MCPClientManager":
+    async def __aenter__(self) -> MCPClientManager:
         await self._stack.__aenter__()
         for server in self._servers:
             await self._connect(server)
@@ -80,9 +80,7 @@ class MCPClientManager:
         await self._stack.aclose()
 
     async def _connect(self, server: MCPServerConfig) -> None:
-        params = StdioServerParameters(
-            command=server.command, args=server.args, env=server.env
-        )
+        params = StdioServerParameters(command=server.command, args=server.args, env=server.env)
         read, write = await self._stack.enter_async_context(stdio_client(params))
         session = await self._stack.enter_async_context(ClientSession(read, write))
         await session.initialize()
@@ -119,7 +117,7 @@ class MCPClientManager:
             return f"Erreur: outil inconnu '{qualified_name}'."
         try:
             result = await reg.session.call_tool(reg.tool_name, arguments=arguments)
-        except Exception as exc:  # noqa: BLE001 - on remonte l'erreur au LLM proprement
+        except Exception as exc:
             return f"Erreur lors de l'appel de '{qualified_name}': {exc}"
         text = _content_to_text(list(result.content))
         if getattr(result, "isError", False):

@@ -41,8 +41,7 @@ PIPELINE: list[tuple[str, str]] = [
     ),
     (
         "qa_tester",
-        "À partir de l'ensemble, rédige le plan de test et les critères d'acceptation "
-        "vérifiables.",
+        "À partir de l'ensemble, rédige le plan de test et les critères d'acceptation vérifiables.",
     ),
 ]
 
@@ -127,7 +126,7 @@ class Orchestrator:
         async with MCPClientManager(self.servers) as manager:
             if log:
                 log(f"Outils MCP disponibles: {', '.join(manager.tool_names()) or 'aucun'}")
-            context = _with_brief(f"Objectif produit: {objective}", project_brief)
+            context: str = _with_brief(f"Objectif produit: {objective}", project_brief) or ""
             for role, instruction in PIPELINE:
                 agent = self.agents[role]
                 if log:
@@ -135,9 +134,7 @@ class Orchestrator:
                 output = await agent.run(
                     task=instruction, manager=manager, context=context, log=log
                 )
-                result.steps.append(
-                    StepResult(role=role, agent_name=agent.name, output=output)
-                )
+                result.steps.append(StepResult(role=role, agent_name=agent.name, output=output))
                 # On enrichit le contexte transmis aux agents suivants.
                 context += f"\n\n[{agent.name}]\n{output}"
         return result
@@ -156,7 +153,5 @@ class Orchestrator:
         agent = self.agents[role]
         context = _with_brief(None, project_brief)
         async with MCPClientManager(self.servers) as manager:
-            output = await agent.run(
-                task=task, manager=manager, context=context, log=log
-            )
+            output = await agent.run(task=task, manager=manager, context=context, log=log)
         return StepResult(role=role, agent_name=agent.name, output=output)

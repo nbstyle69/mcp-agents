@@ -55,8 +55,7 @@ PERSONAS: dict[str, Persona] = {
             f"{_BASE}\n\nTon rôle: Product Owner. Tu clarifies la vision produit, tu "
             "définis les objectifs, les personas utilisateurs, et tu rédiges des user "
             "stories au format 'En tant que … je veux … afin de …' avec des critères "
-            "d'acceptation. Tu priorises (MoSCoW) et tu proposes un MVP."
-            + _GH_NOTE
+            "d'acceptation. Tu priorises (MoSCoW) et tu proposes un MVP." + _GH_NOTE
         ),
         # Le PO consomme la veille réseaux sociaux + peut lire le repo (read-only).
         allowed_tools=[
@@ -95,8 +94,7 @@ PERSONAS: dict[str, Persona] = {
             f"{_BASE}\n\nTon rôle: Développeur Full Stack. Tu proposes une architecture "
             "technique (frontend, backend, base de données, API), tu choisis une stack "
             "justifiée, tu décris le modèle de données et les endpoints, et tu signales "
-            "les risques techniques. Donne des extraits de code lorsqu'ils clarifient."
-            + _GH_NOTE
+            "les risques techniques. Donne des extraits de code lorsqu'ils clarifient." + _GH_NOTE
         ),
         allowed_tools=[*SOCIAL_TOOLS, *GITHUB_TOOLS],
     ),
@@ -107,8 +105,7 @@ PERSONAS: dict[str, Persona] = {
             f"{_BASE}\n\nTon rôle: QA Tester. Tu rédiges un plan de test: cas de test "
             "(nominal, limites, erreurs), critères d'acceptation vérifiables, scénarios "
             "end-to-end, et tu identifies les risques de régression. Format clair en "
-            "tableau ou liste numérotée."
-            + _GH_NOTE
+            "tableau ou liste numérotée." + _GH_NOTE
         ),
         allowed_tools=[*SOCIAL_TOOLS, *GITHUB_TOOLS],
     ),
@@ -134,9 +131,7 @@ PERSONAS: dict[str, Persona] = {
 
 def build_agent(role: str, settings: Settings) -> Agent:
     if role not in PERSONAS:
-        raise KeyError(
-            f"Rôle inconnu '{role}'. Rôles disponibles: {', '.join(PERSONAS)}"
-        )
+        raise KeyError(f"Rôle inconnu '{role}'. Rôles disponibles: {', '.join(PERSONAS)}")
     persona = PERSONAS[role]
     return Agent(
         name=persona.name,
